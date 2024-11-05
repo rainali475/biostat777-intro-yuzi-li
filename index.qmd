@@ -1,0 +1,7 @@
+---
+title: "Me"
+---
+
+My name is Yuzi Li, and I'm a current first year PhD student in Biostatistics at BSPH. I like to play video games and watch anime in my free time.
+
+![Yuzi](yuzili.jpg)

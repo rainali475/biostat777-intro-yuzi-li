@@ -1,0 +1,21 @@
+project:
+  type: website
+
+website:
+  title: "Project 1 Part 2"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: about.qmd
+        text: About
+      - href: example_analysis.qmd
+        text: Example Analysis
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+editor: visual

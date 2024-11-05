@@ -1,0 +1,13 @@
+---
+title: "About"
+---
+
+### Academic background
+
+I finished my undergraduate education at University of Toronto majoring in bioinformatics and biochemistry. I then completed my Master's study at JHU in the Bioinformatics MS program. This year, I am starting my PhD in Biostatistics also here at Hopkins. 
+
+### Research interests
+
+I am interested in using machine learning methods in genomics. My current project is on building a database ([ChromBIRD](https://jhubiostatistics.shinyapps.io/ChromBIRD/)) of predicted chromatin accessibility data integrated with data analysis tools. 
+
+For future projects, I want to integrate -omics data with other health-related data modalities to develop a predictive model for disease risks.

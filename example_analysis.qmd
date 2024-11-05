@@ -1,0 +1,238 @@
+---
+title: "Example Analysis"
+bibliography: refs.bib
+---
+
+## Question
+
+Are kidney cortex genes differentially expressed between biological sex groups?
+
+## Intended Audience
+
+The scientific community or researchers interested in sex-related differences in gene expression in kidney cortex. 
+
+## Data source
+
+Data is obtained from recount3 R package [@recount3], and the original data source is GTEx [@gtex]. 
+
+::: {.column-margin}
+![GTEx](gtex.png)
+:::
+
+Recount3 study explorer: <https://rna.recount.bio/>
+Recount3 R package: <https://bioconductor.org/packages/release/bioc/html/recount3.html>
+GTEx: <https://gtexportal.org/home/>
+
+### Data dictionary 
+
+The GTEx kidney study contains 98 samples coming from 96 subjects. The gene expression matrix contains 63856 ENSEMBL genes for each sample. Each sample is associated with sme metadata, and the data dictionary for the metadata is included below. 
+
+| Term | Description |
+|------|-------------|
+| gtex.sampid | GTEx sample ID. This is unique for each sample. The format is GTEX-[donor ID]-[tissue site ID]-SM-[aliquot ID]. |
+| gtex.subjid | Subject ID. |
+| gtex.age | Age of subject divided into age groups: 20-29, 30-39, 40-49, 50-59, 60-69, 70-79 |
+| gtex.sex | Biological sex of subject. 1 represents male, and 2 represents female. |
+| gtex.smtsd | The accurate site of sample. For kidney study, this includes "Kidney - Cortex" and "Kidney - Medulla". |
+
+: Dictionary for metadata
+
+## Data analysis
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| echo: false
+#| include: false
+library(DESeq2)
+library(recount3)
+library(ggplot2)
+library(dplyr)
+library(MatrixGenerics)
+library(mgcv)
+```
+
+### Get data and metadata
+
+First, get metadata from recount3. 
+
+```{r}
+#| include: false
+recount3_url <- "https://recount-opendata.s3.amazonaws.com/recount3/release"
+# Find all available human projects
+human_projects <- available_projects(recount3_url = recount3_url)
+proj_info <- human_projects[human_projects$project == "KIDNEY", ]
+rse <- create_rse(proj_info, recount3_url = recount3_url)
+```
+
+```{r}
+metadata <- data.frame(rse@colData@listData)
+metadata <- metadata %>% select(gtex.sampid, 
+                                gtex.subjid, 
+                                gtex.age, 
+                                gtex.sex, 
+                                gtex.smtsd)
+head(metadata)
+nrow(metadata %>% distinct(gtex.subjid))
+metadata %>% count(gtex.age)
+metadata %>% count(gtex.sex)
+metadata %>% count(gtex.smtsd)
+```
+
+Get gene expression data for GTEx kidney study from recount3. In the FPKM matrix, each row is a gene and each column is a sample. 
+
+```{r}
+#| echo: true
+#| output: false
+# Get FPKM from raw counts
+deseq_obj <- DESeqDataSet(rse, design = ~ as.factor(c("study", "external_id")))
+fpkm_matrix <- DESeq2::fpkm(deseq_obj)
+```
+
+### Process data
+
+Change sex values in metadata to male and female. 
+
+```{r}
+metadata <- metadata %>% mutate_at(vars(gtex.sex), recode, 
+                                   "1" = "male", "2" = "female")
+```
+
+Match FPKM matrix column names with sample IDs, exclude medulla samples, and exclude duplicate samples from same subject.
+
+::: {.callout-note}
+Note that there are only 4 medulla samples, so excluding them would not largely reduce the number of samples. 
+:::
+
+```{r}
+colnames(fpkm_matrix) <- gsub("\\.1", "", colnames(fpkm_matrix))
+metadata <- metadata %>% filter(gtex.smtsd == "Kidney - Cortex") %>% 
+  distinct(gtex.subjid, .keep_all = TRUE)
+fpkm_matrix <- fpkm_matrix[, metadata$gtex.sampid]
+ncol(fpkm_matrix)
+```
+
+Remove zero-variance genes.
+
+```{r}
+fpkm_matrix <- fpkm_matrix[rowVars(fpkm_matrix) > 0, ]
+nrow(fpkm_matrix)
+```
+
+Fit GAM model to log mean and log variance of expression, then keep only the top 5000 genes with high residual variance. 
+
+::: {.callout-tip}
+Here, we filter genes with mean-adjusted variance instead of variance because genes that are highly expressed often have more variance in expression than genes that have low expression. 
+:::
+
+```{r}
+gene_mean <- rowMeans(fpkm_matrix)
+gene_var <- rowVars(fpkm_matrix)
+mean_var_df <- data.frame(X=gene_mean,Y=gene_var)
+gam_model <- gam(formula = log2(x=Y) ~ s(log2(x=X)), data = mean_var_df)
+gene_sd_expect <- sqrt(2^(gam_model$fitted.values))
+gene_var_norm <- (fpkm_matrix - gene_mean)/gene_sd_expect
+gene_hyper_var <- rowSums(gene_var_norm^2)/(ncol(fpkm_matrix) - 1)
+
+fpkm_matrix <- fpkm_matrix[order(gene_hyper_var)[1:5000], ]
+```
+
+Check average log gene expression in female and male. 
+
+```{r}
+#| message: false
+#| warning: false
+fm_avg <- rowMeans(log(fpkm_matrix[, metadata$gtex.sex == "female"] + 1))
+m_avg <- rowMeans(log(fpkm_matrix[, metadata$gtex.sex == "male"] + 1))
+expr_avg <- data.frame(expression = c(m_avg, fm_avg), 
+                       sex = as.factor(rep(c("male", "female"), 
+                                           each = nrow(fpkm_matrix))))
+g <- ggplot(expr_avg, aes(expression)) + geom_histogram() + facet_wrap(vars(sex))
+g <- g + labs(title = "Mean expression comparison between sex", 
+              subtitle = "Mean log FPKM in female and male kidneys", 
+              caption = "Data source: GTEx")
+g
+```
+
+### PCA
+
+Use PCA to explore gene expression data [@PCA]. 
+
+```{r}
+pca_res <- prcomp(t(fpkm_matrix), scale. = TRUE)
+top_pcs <- data.frame(pca_res$x)
+g <- ggplot(data = top_pcs, 
+            mapping = aes(PC1, PC2, colour = as.factor(metadata$gtex.sex))) +
+  geom_point()
+g$labels$colour <- "Sex"
+g <- g + labs(colour = "Sex", 
+              title = "PCA plot", 
+              subtitle = "Top two PCs of PCA on kidney samples gene expression", 
+              caption = "Data source: GTEx")
+g
+```
+
+```{r}
+#| warning: false
+explained_var <- data.frame(t(summary(pca_res)$importance))
+explained_var <- explained_var[1:10, ]
+var_plot <- ggplot(data = explained_var, 
+                   mapping = aes(factor(rownames(explained_var), 
+                                        levels = rownames(explained_var)), 
+                                 explained_var$Proportion.of.Variance, group=1))
+var_plot <- var_plot + geom_line() + geom_point()
+var_plot <- var_plot + labs(x = "Principal Components", 
+                            y = "Proportion of Variance Explained", 
+                            title = "PCA exaplained variance", 
+                            subtitle = "Proportions of variance explained by top 10 PCs", 
+                            caption = "Based on GTEx kidney RNA-seq study")
+var_plot <- var_plot + geom_text(aes(label=explained_var$Proportion.of.Variance),
+                                 vjust=-0.25)
+var_plot
+```
+
+There is no clear separation of female and male subjects kidney gene expression from the top PCs. 
+
+### Differential expression analysis
+
+Use Wilcoxon rank sum test to compare female and male expression of each gene in kidney.
+
+```{r}
+groups <- metadata$gtex.sex
+names(groups) <- metadata$gtex.sampid
+
+res <- t(apply(fpkm_matrix, 1, function(i) {
+  tmptest <- wilcox.test(i[groups=="male"],
+                         i[groups=="female"],
+                         alternative = "two.sided",
+                         var.equal = T)
+  c(tmptest$statistic, tmptest$p.value)
+}))
+FDR <- p.adjust(res[,2],method="fdr")
+diff_logfc <- rowMeans(log2(fpkm_matrix[, groups == "female"] + 1)) - 
+  rowMeans(log2(fpkm_matrix[, groups == "male"] + 1))
+diff_res <- data.frame(statistics = res[,1],
+                       pvalue = res[,2],
+                       FDR = FDR,
+                       logFC = diff_logfc, 
+                       stringsAsFactors = F)
+diff_res[order(diff_res$FDR)[1:10],]
+summary(diff_logfc)
+```
+
+The significant FDR values show that there are sex-related differences in kidney gene expression, but the small log fold change suggests that the differences are slight in terms of difference in amount of genes expressed.
+
+### Functions used
+
+#### dplyr
+
+select, count, distinct, filter, pull
+
+#### ggplot2
+
+geom_histogram, geom_point, geom_line
+
+## Summary
+
+In this project, we examine the sex-related difference in kidney cortex gene expression profiles. We see that in GTEx kidney cortex RNA-seq data, male and female gene expression cannot be separated well by PCA. Using Wilcoxon rank sum test on each gene, we see that there are some sex-related differential gene expression in kidney indicated by the small adjusted p-values. However, the amount of change in expression is small. In conclusion, there are differences in gene expression profiles of male and female kidneys, but these differences are not huge in magnitude.
