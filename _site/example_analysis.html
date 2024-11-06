@@ -212,7 +212,7 @@ div.csl-indent {
 
 <section id="question" class="level2">
 <h2 class="anchored" data-anchor-id="question">Question</h2>
-<p>Find out what kidney cortex genes are differentially expressed between biological sex groups.</p>
+<p>Are kidney cortex genes differentially expressed between biological sex groups?</p>
 </section>
 <section id="intended-audience" class="level2">
 <h2 class="anchored" data-anchor-id="intended-audience">Intended Audience</h2>
@@ -518,7 +518,7 @@ ENSG00000229308.1      1464.0 5.473275e-11 2.736638e-08 -0.002405182</code></pre
 </section>
 <section id="summary" class="level2">
 <h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<p>In this project, we examine the sex-related difference in kidney cortex gene expression profiles. We see that in GTEx kidney cortex RNA-seq data, male and female gene expression cannot be separated well by PCA. Using Wilcoxon rank sum test on each gene, we see that there are sex-related differential gene expression in kidney indicated by the small adjusted p-values. However, the amount of change in expression is small. In conclusion, there are differences in gene expression profiles of male and female kidneys, but these differences are not huge in magnitude.</p>
+<p>In this project, we examine the sex-related difference in kidney cortex gene expression profiles. We see that in GTEx kidney cortex RNA-seq data, male and female gene expression cannot be separated well by PCA. Using Wilcoxon rank sum test on each gene, we see that there are some sex-related differential gene expression in kidney indicated by the small adjusted p-values. However, the amount of change in expression is small. In conclusion, there are differences in gene expression profiles of male and female kidneys, but these differences are not huge in magnitude.</p>
 
 
 
@@ -627,7 +627,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   }
     var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
     var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp('/' + window.location.host + '/');
+      var filterRegex = new RegExp("https:\/\/83929427-f343-4985-b5b0-b99c02a31549\.netlify\.app\/");
     var isInternal = (href) => {
         return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
     }

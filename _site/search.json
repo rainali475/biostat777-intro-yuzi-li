@@ -18,28 +18,14 @@
     "href": "example_analysis.html",
     "title": "Example Analysis",
     "section": "",
-    "text": "Find out what kidney cortex genes are differentially expressed between biological sex groups."
-  },
-  {
-    "objectID": "example_analysis.html#quarto",
-    "href": "example_analysis.html#quarto",
-    "title": "Example Analysis",
-    "section": "",
-    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
-  },
-  {
-    "objectID": "example_analysis.html#running-code",
-    "href": "example_analysis.html#running-code",
-    "title": "Example Analysis",
-    "section": "Running Code",
-    "text": "Running Code\nWhen you click the Render button a document will be generated that includes both content and the output of embedded code. You can embed code like this:\n\n1 + 1\n\n[1] 2\n\n\nYou can add options to executable code like this\n\n\n[1] 4\n\n\nThe echo: false option disables the printing of code (only output is displayed)."
+    "text": "Are kidney cortex genes differentially expressed between biological sex groups?"
   },
   {
     "objectID": "example_analysis.html#question",
     "href": "example_analysis.html#question",
     "title": "Example Analysis",
     "section": "",
-    "text": "Find out what kidney cortex genes are differentially expressed between biological sex groups."
+    "text": "Are kidney cortex genes differentially expressed between biological sex groups?"
   },
   {
     "objectID": "example_analysis.html#intended-audience",
@@ -67,6 +53,6 @@
     "href": "example_analysis.html#summary",
     "title": "Example Analysis",
     "section": "Summary",
-    "text": "Summary\nIn this project, we examine the sex-related difference in kidney cortex gene expression profiles. We see that in GTEx kidney cortex RNA-seq data, male and female gene expression cannot be separated well by PCA. Using Wilcoxon rank sum test on each gene, we see that there are sex-related differential gene expression in kidney indicated by the small adjusted p-values. However, the amount of change in expression is small. In conclusion, there are differences in gene expression profiles of male and female kidneys, but these differences are not huge in magnitude."
+    "text": "Summary\nIn this project, we examine the sex-related difference in kidney cortex gene expression profiles. We see that in GTEx kidney cortex RNA-seq data, male and female gene expression cannot be separated well by PCA. Using Wilcoxon rank sum test on each gene, we see that there are some sex-related differential gene expression in kidney indicated by the small adjusted p-values. However, the amount of change in expression is small. In conclusion, there are differences in gene expression profiles of male and female kidneys, but these differences are not huge in magnitude."
   }
 ]
